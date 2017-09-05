@@ -1,0 +1,55 @@
+                         llbcpl
+
+What is it?
+-----------
+
+llbcpl is an implementation of an BCPL INTCODE
+assembler and interpreter.
+
+Documentation
+-------------
+
+Not much is documented yet, but INTCODE is
+documented in docs/intcode.txt.
+
+Installation
+------------
+
+llbcpl is built using CMake. Brief build instructions:
+
+$ mkdir <build directory>
+$ cd <build directory>
+$ cmake <source directory>
+$ make
+
+In source tree build should also work fine.
+
+Example
+-------
+
+Source directory has a compiled example program, to calculate
+the first 10 factorials. 
+
+$ <build directory>/ici <source directory>/fact.int
+F(1), = 1
+F(2), = 2
+F(3), = 6
+F(4), = 24
+F(5), = 120
+F(6), = 720
+F(7), = 5040
+F(8), = -25216
+F(9), = -30336
+F(10), = 24320
+
+As the interpreter uses 16-bit words, factorials over 8 will wrap.
+
+Licensing
+---------
+
+Please see the file called LICENSE.
+
+Contacts
+--------
+
+For any questions or issues, please contact <daniel@malarhojden.nu>.

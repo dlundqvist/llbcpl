@@ -1,0 +1,33 @@
+# Copyright 2017 Daniel Lundqvist. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+include(CheckCXXCompilerFlag)
+
+function(ll_cxx_check_flag target scope flag)
+	string(REPLACE "-" "_" var ${flag})
+	string(TOUPPER ${var} var)
+	string(TOUPPER ${PROJECT_NAME} pu)
+	set(var "${pu}_CXX_FLAG${var}")
+	check_cxx_compiler_flag(${flag} ${var})
+	if(${var})
+		target_compile_options(${target} ${scope} ${flag})
+	endif()
+endfunction()
+
+set(__GNU_LIKE_COMPILERS "AppleClang;Clang;GNU")
+macro(ll_target_extra_warnings target scope)
+	if (CMAKE_CXX_COMPILER_ID IN_LIST __GNU_LIKE_COMPILERS)
+		ll_cxx_check_flag(${target} ${scope} "-pedantic")
+		ll_cxx_check_flag(${target} ${scope} "-Wall")
+		ll_cxx_check_flag(${target} ${scope} "-Wextra")
+		ll_cxx_check_flag(${target} ${scope} "-Wunused")
+		ll_cxx_check_flag(${target} ${scope} "-Wconversion")
+		ll_cxx_check_flag(${target} ${scope} "-Wsign-conversion")
+		ll_cxx_check_flag(${target} ${scope} "-Wuninitialized")
+		ll_cxx_check_flag(${target} ${scope} "-Wshadow")
+		string(TOUPPER ${PROJECT_NAME} pu)
+		if(${pu}_DEVEL)
+			ll_cxx_check_flag(${target} ${scope} "-Werror")
+		endif()
+	endif()
+endmacro()
