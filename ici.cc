@@ -398,204 +398,204 @@ panic(machine &M, std::string s) {
 word
 interpret(machine &M)
 {
-  while (1) {
-    //std::cerr << std::dec << M.C << ' ' << idecode(M) << '\n';
-    auto W = M.S[M.C++];
+next:
+  //std::cerr << std::dec << M.C << ' ' << idecode(M) << '\n';
+  auto W = M.S[M.C++];
 
-    if (W & d_bit) {
-      M.D = M.S[M.C++];
-    } else {
-      M.D = W & d_mask;
-    }
+  if (W & d_bit) {
+    M.D = M.S[M.C++];
+  } else {
+    M.D = W & d_mask;
+  }
 
-    if (W & p_bit) {
-      M.D += M.P;
-    }
+  if (W & p_bit) {
+    M.D += M.P;
+  }
 
-    if (W & g_bit) {
-      M.D += M.G;
-    }
+  if (W & g_bit) {
+    M.D += M.G;
+  }
 
-    if (W & i_bit) {
-      M.D = M.S[M.D];
-    }
+  if (W & i_bit) {
+    M.D = M.S[M.D];
+  }
 
-    switch ((W >> f_shift) & 0x7) {
-      case l_op:
-        M.B = M.A;
-        M.A = static_cast<word>(M.D);
-        break;
-      case s_op:
-        M.S[M.D] = static_cast<uword>(M.A);
-        break;
-      case a_op:
-        M.A = M.A + static_cast<word>(M.D);
-        break;
-      case j_op:
+  switch ((W >> f_shift) & 0x7) {
+    case l_op:
+      M.B = M.A;
+      M.A = static_cast<word>(M.D);
+      break;
+    case s_op:
+      M.S[M.D] = static_cast<uword>(M.A);
+      break;
+    case a_op:
+      M.A = M.A + static_cast<word>(M.D);
+      break;
+    case j_op:
+      M.C = M.D;
+      break;
+    case t_op:
+      if (M.A) {
         M.C = M.D;
-        break;
-      case t_op:
-        if (M.A) {
-          M.C = M.D;
-        }
-        break;
-      case f_op:
-        if (!M.A) {
-          M.C = M.D;
-        }
-        break;
-      case k_op:
-        M.D = M.P + M.D;
-        M.S[M.D + 0] = M.P;
-        M.S[M.D + 1] = M.C;
-        M.P = M.D;
-        M.C = static_cast<uword>(M.A);
-        break;
-      case x_op: {
-        switch (M.D) {
-          case 1:
-            M.A = static_cast<word>(M.S[static_cast<uword>(M.A)]);
-            break;
-          case 2:
-            M.A = -M.A;
-            break;
-          case 3:
-            M.A = ~M.A;
-            break;
-          case 4:
-            M.C = M.S[M.P + 1];
-            M.P = M.S[M.P + 0];
-            break;
-          case 5:
-            M.A = M.B * M.A;
-            break;
-          case 6:
-            M.A = M.B / M.A;
-            break;
-          case 7:
-            M.A = M.B % M.A;
-            break;
-          case 8:
-            M.A = M.B + M.A;
-            break;
-          case 9:
-            M.A = M.B - M.A;
-            break;
-          case 10:
-            M.A = M.B == M.A ? ~0 : 0;
-            break;
-          case 11:
-            M.A = M.B != M.A ? ~0 : 0;
-            break;
-          case 12:
-            M.A = M.B < M.A ? ~0 : 0;
-            break;
-          case 13:
-            M.A = M.B >= M.A ? ~0 : 0;
-            break;
-          case 14:
-            M.A = M.B > M.A ? ~0 : 0;
-            break;
-          case 15:
-            M.A = M.B <= M.A ? ~0 : 0;
-            break;
-          case 16:
-            M.A = static_cast<word>(M.B << M.A);
-            break;
-          case 17:
-            M.A = M.B >> M.A;
-            break;
-          case 18:
-            M.A = M.B & M.A;
-            break;
-          case 19:
-            M.A = M.B | M.A;
-            break;
-          case 20:
-            M.A = M.B ^ M.A;
-            break;
-          case 21:
-            M.A = ~M.B ^ M.A;
-            break;
-          case 22:
-            return 0;
-          case 23:
-            M.B = static_cast<word>(M.S[M.C + 0]);
-            M.D = M.S[M.C + 1];
-            while (M.B != 0) {
-              M.B = M.B - 1;
-              M.C = M.C + 2;
-              if (M.A == static_cast<word>(M.S[M.C + 0])) {
-                M.D = M.S[M.C + 1];
-                break;
-              }
-            }
-            M.C = M.D;
-            break;
-          case 24:
-            M.selected_input = static_cast<uword>(M.A);
-            break;
-          case 25:
-            M.selected_output = static_cast<uword>(M.A);
-            break;
-          case 26:
-            M.A = static_cast<word>(std::fgetc(M.files[M.selected_input]));
-            break;
-          case 27:
-            std::fprintf(M.files[M.selected_output], "%c", static_cast<char>(M.A));
-            break;
-          case 28:
-            M.A = findinput(M, stringbcpl(M, static_cast<uword>(M.A)));
-            break;
-          case 29:
-            M.A = findoutput(M, stringbcpl(M, static_cast<uword>(M.A)));
-            break;
-          case 30:
-            return M.A;
-          case 31:
-            M.A = static_cast<word>(M.S[M.P]);
-            break;
-          case 32:
-            M.P = static_cast<uword>(M.A);
-            M.C = static_cast<uword>(M.B);
-            break;
-          case 33:
-            if (M.selected_input) {
-              std::fclose(M.files[M.selected_input]);
-              M.files[M.selected_input] = nullptr;
-            }
-            M.selected_input = 0;
-            break;
-          case 34:
-            if (M.selected_output) {
-              std::fclose(M.files[M.selected_output]);
-              M.files[M.selected_output] = nullptr;
-            }
-            M.selected_output = 0;
-            break;
-          case 35:
-            M.D = static_cast<uword>(M.P + static_cast<uword>(M.B) + 1);
-            M.S[M.D + 0] = M.S[M.P + 0];
-            M.S[M.D + 1] = M.S[M.P + 1];
-            M.S[M.D + 2] = M.P;
-            M.S[M.D + 3] = static_cast<uword>(M.B);
-            M.P = M.D;
-            M.C = static_cast<uword>(M.A);
-            break;
-          case 36:
-            M.A = icgetbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B));
-            break;
-          case 37:
-            icputbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B), M.S[M.P + 4]);
-            break;
-          case 38:
-            panic(M, stringbcpl(M, static_cast<uword>(M.A)));
-            break;
-        }
-        break;
       }
+      break;
+    case f_op:
+      if (!M.A) {
+        M.C = M.D;
+      }
+      break;
+    case k_op:
+      M.D = M.P + M.D;
+      M.S[M.D + 0] = M.P;
+      M.S[M.D + 1] = M.C;
+      M.P = M.D;
+      M.C = static_cast<uword>(M.A);
+      break;
+    case x_op: {
+      switch (M.D) {
+        case 1:
+          M.A = static_cast<word>(M.S[static_cast<uword>(M.A)]);
+          break;
+        case 2:
+          M.A = -M.A;
+          break;
+        case 3:
+          M.A = ~M.A;
+          break;
+        case 4:
+          M.C = M.S[M.P + 1];
+          M.P = M.S[M.P + 0];
+          break;
+        case 5:
+          M.A = M.B * M.A;
+          break;
+        case 6:
+          M.A = M.B / M.A;
+          break;
+        case 7:
+          M.A = M.B % M.A;
+          break;
+        case 8:
+          M.A = M.B + M.A;
+          break;
+        case 9:
+          M.A = M.B - M.A;
+          break;
+        case 10:
+          M.A = M.B == M.A ? ~0 : 0;
+          break;
+        case 11:
+          M.A = M.B != M.A ? ~0 : 0;
+          break;
+        case 12:
+          M.A = M.B < M.A ? ~0 : 0;
+          break;
+        case 13:
+          M.A = M.B >= M.A ? ~0 : 0;
+          break;
+        case 14:
+          M.A = M.B > M.A ? ~0 : 0;
+          break;
+        case 15:
+          M.A = M.B <= M.A ? ~0 : 0;
+          break;
+        case 16:
+          M.A = static_cast<word>(M.B << M.A);
+          break;
+        case 17:
+          M.A = M.B >> M.A;
+          break;
+        case 18:
+          M.A = M.B & M.A;
+          break;
+        case 19:
+          M.A = M.B | M.A;
+          break;
+        case 20:
+          M.A = M.B ^ M.A;
+          break;
+        case 21:
+          M.A = ~M.B ^ M.A;
+          break;
+        case 22:
+          return 0;
+        case 23:
+          M.B = static_cast<word>(M.S[M.C + 0]);
+          M.D = M.S[M.C + 1];
+          while (M.B != 0) {
+            M.B = M.B - 1;
+            M.C = M.C + 2;
+            if (M.A == static_cast<word>(M.S[M.C + 0])) {
+              M.D = M.S[M.C + 1];
+              break;
+            }
+          }
+          M.C = M.D;
+          break;
+        case 24:
+          M.selected_input = static_cast<uword>(M.A);
+          break;
+        case 25:
+          M.selected_output = static_cast<uword>(M.A);
+          break;
+        case 26:
+          M.A = static_cast<word>(std::fgetc(M.files[M.selected_input]));
+          break;
+        case 27:
+          std::fprintf(M.files[M.selected_output], "%c", static_cast<char>(M.A));
+          break;
+        case 28:
+          M.A = findinput(M, stringbcpl(M, static_cast<uword>(M.A)));
+          break;
+        case 29:
+          M.A = findoutput(M, stringbcpl(M, static_cast<uword>(M.A)));
+          break;
+        case 30:
+          return M.A;
+        case 31:
+          M.A = static_cast<word>(M.S[M.P]);
+          break;
+        case 32:
+          M.P = static_cast<uword>(M.A);
+          M.C = static_cast<uword>(M.B);
+          break;
+        case 33:
+          if (M.selected_input) {
+            std::fclose(M.files[M.selected_input]);
+            M.files[M.selected_input] = nullptr;
+          }
+          M.selected_input = 0;
+          break;
+        case 34:
+          if (M.selected_output) {
+            std::fclose(M.files[M.selected_output]);
+            M.files[M.selected_output] = nullptr;
+          }
+          M.selected_output = 0;
+          break;
+        case 35:
+          M.D = static_cast<uword>(M.P + static_cast<uword>(M.B) + 1);
+          M.S[M.D + 0] = M.S[M.P + 0];
+          M.S[M.D + 1] = M.S[M.P + 1];
+          M.S[M.D + 2] = M.P;
+          M.S[M.D + 3] = static_cast<uword>(M.B);
+          M.P = M.D;
+          M.C = static_cast<uword>(M.A);
+          break;
+        case 36:
+          M.A = icgetbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B));
+          break;
+        case 37:
+          icputbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B), M.S[M.P + 4]);
+          break;
+        case 38:
+          panic(M, stringbcpl(M, static_cast<uword>(M.A)));
+          break;
+      }
+      break;
     }
   }
+  goto next;
 }
 }
 
