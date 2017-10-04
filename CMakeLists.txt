@@ -11,7 +11,8 @@ include(Warnings)
 add_executable(ici ici.cc)
 
 target_compile_features(ici PRIVATE cxx_std_14)
-set_target_properties(ici PROPERTIES CXX_EXTENSIONS OFF)
+set_target_properties(ici PROPERTIES CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF)
 ll_target_extra_warnings(ici PRIVATE)
 
 install(TARGETS ici RUNTIME DESTINATION bin)
