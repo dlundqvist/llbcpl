@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 project(llbcpl LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(BuildType)
 include(Warnings)
 
 add_executable(ici ici.cc)
