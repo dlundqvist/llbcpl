@@ -186,7 +186,7 @@ assemble(std::basic_istream<char> &is)
   }
 
 clear:
-  std::fill(A.L.begin(), A.L.end(), 0);
+  std::fill(A.L.begin(), A.L.end(), static_cast<word>(0));
   A.CP = 0;
 next:
   rch(A);
