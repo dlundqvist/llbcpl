@@ -4,8 +4,9 @@
 include(CheckCXXCompilerFlag)
 
 function(ll_cxx_check_flag target scope flag)
-  string(REPLACE "-" "_" var ${flag})
-  string(REPLACE "/" "_" var ${flag})
+  set(var ${flag})
+  string(REPLACE "-" "_" var ${var})
+  string(REPLACE "/" "_" var ${var})
   string(TOUPPER ${var} var)
   string(TOUPPER ${PROJECT_NAME} pu)
   set(var "${pu}_CXX_FLAG${var}")
