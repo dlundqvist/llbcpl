@@ -10,6 +10,7 @@ set(__ll_gnu_like_compilers "AppleClang;Clang;GNU"
 
 include(BuildType)
 include(Warnings)
+include(Sanitizer)
 
 function(ll_add_cxx_compiler_flag target scope flag)
   set(var ${flag})
@@ -36,4 +37,5 @@ function(ll_add_executable target)
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
   ll_target_extra_warnings(${target} PRIVATE)
+  ll_target_sanitizer(${target} PRIVATE)
 endfunction()
