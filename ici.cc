@@ -79,7 +79,7 @@ setlab(assembler &A, word N)
     A.M.S[static_cast<uword>(K)] = A.M.P;
     K = D;
   }
-  A.L[static_cast<uword>(N)] = -static_cast<word>(A.M.P);
+  A.L[static_cast<uword>(N)] = static_cast<word>(-A.M.P);
 }
 
 // Reference label N at address D.
@@ -90,11 +90,11 @@ labref(assembler &A, word N, uword D)
 {
   auto K = A.L[static_cast<uword>(N)];
   if (K < 0) {
-    K = -K;
+    K = static_cast<word>(-K);
   } else {
     A.L[static_cast<uword>(N)] = static_cast<word>(D);
   }
-  A.M.S[D] += static_cast<uword>(K);
+  A.M.S[D] = static_cast<uword>(A.M.S[D] + static_cast<uword>(K));
 }
 
 // Read next character.
@@ -123,10 +123,10 @@ rdn(assembler &A)
     rch(A);
   }
   while ('0' <= A.CH && A.CH <= '9') {
-    N = N * 10 + static_cast<word>(A.CH - '0');
+    N = static_cast<word>(N * 10 + A.CH - '0');
     rch(A);
   }
-  return negative ? -N : N;
+  return static_cast<word>(negative ? -N : N);
 }
 
 void
@@ -143,8 +143,9 @@ stc(assembler &A, word C)
     stw(A, 0);
     A.CP = wordsize;
   }
-  A.CP -= bytesize;
-  A.M.S[A.M.P - 1] += static_cast<uword>(C << A.CP);
+  A.CP = static_cast<uword>(A.CP - bytesize);
+  uword I = static_cast<uword>(A.M.P - 1);
+  A.M.S[I] = static_cast<uword>(A.M.S[I] + static_cast<uword>(C << A.CP));
 }
 
 void
@@ -176,7 +177,7 @@ assemble(std::basic_istream<char> &is)
   setlab(A, 1);
   stw(A, (l_op << f_shift) | d_bit);
   stw(A, 0u);
-  labref(A, 2, A.M.P - 1);
+  labref(A, 2, static_cast<uword>(A.M.P - 1));
   stw(A, (x_op << f_shift) | 38);
   setlab(A, 2);
   sts(A, "Unset global called!");
@@ -243,14 +244,14 @@ sw:
       if (A.CH == 'L') {
         rch(A);
         stw(A, 0u);
-        labref(A, rdn(A), A.M.P - 1);
+        labref(A, rdn(A), static_cast<uword>(A.M.P - 1));
       } else {
         stw(A, static_cast<uword>(rdn(A)));
       }
       goto sw;
     case 'G': {
       rch(A);
-      uword Ad = static_cast<uword>(rdn(A)) + A.M.G;
+      uword Ad = static_cast<uword>(rdn(A) + A.M.G);
       if (A.CH == 'L') {
         rch(A);
       } else {
@@ -290,7 +291,7 @@ sw:
     rch(A);
     stw(A, W | d_bit);
     stw(A, 0u);
-    labref(A, rdn(A), A.M.P - 1);
+    labref(A, rdn(A), static_cast<uword>(A.M.P - 1));
   } else {
     auto D = static_cast<uword>(rdn(A));
     if ((D & d_mask) == D) {
@@ -314,7 +315,7 @@ idecode(machine &M) {
   s += W & p_bit ? "P" : "";
   s += W & g_bit ? "G" : "";
   if (W & d_bit) {
-    s += std::to_string(M.S[M.C + 1]);
+    s += std::to_string(M.S[static_cast<uword>(M.C + 1)]);
   } else {
     s += std::to_string(W & d_mask);
   }
@@ -333,7 +334,7 @@ void
 icputbyte(machine &M, uword S, uword I, uword CH) {
   auto C = reinterpret_cast<uint8_t *>(&M.S[S + I / bytesperword]);
   I = I & (bytesperword - 1);
-  C[bytesperword - 1 - I] = CH & 0xff;
+  C[bytesperword - 1 - I] = static_cast<uint8_t>(CH & 0xff);
 }
 
 std::string
@@ -341,7 +342,7 @@ stringbcpl(machine &M, uword A) {
   auto l = static_cast<std::size_t>(icgetbyte(M, A, 0));
   std::string s(l, 0);
   for(uword i = 0u; i < l; ++i) {
-    s[i] = static_cast<char>(icgetbyte(M, A, i + 1));
+    s[i] = static_cast<char>(icgetbyte(M, A, static_cast<uword>(i + 1)));
   }
   return s;
 }
@@ -391,7 +392,7 @@ findoutput(machine &M, std::string output) {
 
 void
 panic(machine &M, std::string s) {
-  std::cerr << "PANIC C" << std::dec << M.S[M.P + 1] - 1 << " P" << M.S[M.P] << ": " << s << '\n';
+  std::cerr << "PANIC C" << std::dec << M.S[static_cast<uword>(M.P + 1)] - 1 << " P" << M.S[M.P] << ": " << s << '\n';
   std::exit(1);
 }
 
@@ -409,11 +410,11 @@ next:
   }
 
   if (W & p_bit) {
-    M.D += M.P;
+    M.D = static_cast<uword>(M.D + M.P);
   }
 
   if (W & g_bit) {
-    M.D += M.G;
+    M.D = static_cast<uword>(M.D + M.G);
   }
 
   if (W & i_bit) {
@@ -429,7 +430,7 @@ next:
       M.S[M.D] = static_cast<uword>(M.A);
       break;
     case a_op:
-      M.A = M.A + static_cast<word>(M.D);
+      M.A = static_cast<word>(M.A + static_cast<word>(M.D));
       break;
     case j_op:
       M.C = M.D;
@@ -445,9 +446,9 @@ next:
       }
       break;
     case k_op:
-      M.D = M.P + M.D;
-      M.S[M.D + 0] = M.P;
-      M.S[M.D + 1] = M.C;
+      M.D = static_cast<uword>(M.P + M.D);
+      M.S[static_cast<uword>(M.D + 0)] = M.P;
+      M.S[static_cast<uword>(M.D + 1)] = M.C;
       M.P = M.D;
       M.C = static_cast<uword>(M.A);
       break;
@@ -457,29 +458,29 @@ next:
           M.A = static_cast<word>(M.S[static_cast<uword>(M.A)]);
           break;
         case 2:
-          M.A = -M.A;
+          M.A = static_cast<word>(-M.A);
           break;
         case 3:
-          M.A = ~M.A;
+          M.A = static_cast<word>(~M.A);
           break;
         case 4:
-          M.C = M.S[M.P + 1];
-          M.P = M.S[M.P + 0];
+          M.C = M.S[static_cast<uword>(M.P + 1)];
+          M.P = M.S[static_cast<uword>(M.P + 0)];
           break;
         case 5:
-          M.A = M.B * M.A;
+          M.A = static_cast<word>(M.B * M.A);
           break;
         case 6:
-          M.A = M.B / M.A;
+          M.A = static_cast<word>(M.B / M.A);
           break;
         case 7:
-          M.A = M.B % M.A;
+          M.A = static_cast<word>(M.B % M.A);
           break;
         case 8:
-          M.A = M.B + M.A;
+          M.A = static_cast<word>(M.B + M.A);
           break;
         case 9:
-          M.A = M.B - M.A;
+          M.A = static_cast<word>(M.B - M.A);
           break;
         case 10:
           M.A = M.B == M.A ? ~0 : 0;
@@ -503,7 +504,7 @@ next:
           M.A = static_cast<word>(M.B << M.A);
           break;
         case 17:
-          M.A = M.B >> M.A;
+          M.A = static_cast<word>(M.B >> M.A);
           break;
         case 18:
           M.A = M.B & M.A;
@@ -515,18 +516,18 @@ next:
           M.A = M.B ^ M.A;
           break;
         case 21:
-          M.A = ~M.B ^ M.A;
+          M.A = static_cast<word>(~M.B ^ M.A);
           break;
         case 22:
           return 0;
         case 23:
-          M.B = static_cast<word>(M.S[M.C + 0]);
-          M.D = M.S[M.C + 1];
+          M.B = static_cast<word>(M.S[static_cast<uword>(M.C + 0)]);
+          M.D = M.S[static_cast<uword>(M.C + 1)];
           while (M.B != 0) {
-            M.B = M.B - 1;
-            M.C = M.C + 2;
+            M.B = static_cast<word>(M.B - 1);
+            M.C = static_cast<uword>(M.C + 2);
             if (M.A == static_cast<word>(M.S[M.C + 0])) {
-              M.D = M.S[M.C + 1];
+              M.D = M.S[static_cast<uword>(M.C + 1)];
               break;
             }
           }
@@ -575,10 +576,10 @@ next:
           break;
         case 35:
           M.D = static_cast<uword>(M.P + static_cast<uword>(M.B) + 1);
-          M.S[M.D + 0] = M.S[M.P + 0];
-          M.S[M.D + 1] = M.S[M.P + 1];
-          M.S[M.D + 2] = M.P;
-          M.S[M.D + 3] = static_cast<uword>(M.B);
+          M.S[static_cast<uword>(M.D + 0)] = M.S[static_cast<uword>(M.P + 0)];
+          M.S[static_cast<uword>(M.D + 1)] = M.S[static_cast<uword>(M.P + 1)];
+          M.S[static_cast<uword>(M.D + 2)] = M.P;
+          M.S[static_cast<uword>(M.D + 3)] = static_cast<uword>(M.B);
           M.P = M.D;
           M.C = static_cast<uword>(M.A);
           break;
@@ -586,7 +587,7 @@ next:
           M.A = icgetbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B));
           break;
         case 37:
-          icputbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B), M.S[M.P + 4]);
+          icputbyte(M, static_cast<uword>(M.A), static_cast<uword>(M.B), M.S[static_cast<uword>(M.P + 4)]);
           break;
         case 38:
           panic(M, stringbcpl(M, static_cast<uword>(M.A)));
