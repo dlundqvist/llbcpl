@@ -26,3 +26,5 @@ add_custom_target(cg-ic ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/cg.ic)
 ll_add_executable(ici ici.cc)
 
 install(TARGETS ici RUNTIME DESTINATION bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/c.ic DESTINATION share/llbcpl)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cg.ic DESTINATION share/llbcpl)
