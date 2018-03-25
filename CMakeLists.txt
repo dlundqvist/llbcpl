@@ -7,6 +7,8 @@ project(llbcpl LANGUAGES CXX)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(LL)
 
+ll_add_executable(concat concat.cc)
+
 ll_add_executable(ici ici.cc)
 
 install(TARGETS ici RUNTIME DESTINATION bin)
